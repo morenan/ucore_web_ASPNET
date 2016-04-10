@@ -1,0 +1,5 @@
+/home/nancy/Desktop/ucore_web_ASPNET/ucore_web_ASPNET/obj/Debug/.NETFramework,Version=v4.5.AssemblyAttribute.cs
+/home/nancy/Desktop/ucore_web_ASPNET/ucore_web_ASPNET/bin/ucore_web_ASPNET.dll.mdb
+/home/nancy/Desktop/ucore_web_ASPNET/ucore_web_ASPNET/bin/ucore_web_ASPNET.dll
+/home/nancy/Desktop/ucore_web_ASPNET/ucore_web_ASPNET/obj/Debug/ucore_web_ASPNET.dll
+/home/nancy/Desktop/ucore_web_ASPNET/ucore_web_ASPNET/obj/Debug/ucore_web_ASPNET.dll.mdb

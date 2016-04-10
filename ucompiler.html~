@@ -1,0 +1,13 @@
+﻿<html>
+<head>
+	<title>uCompiler</title>
+	<style type="text/css">
+		body {background-color:#000000;}
+	</style>
+</head>
+<body>
+	<div id="board"></div>
+	<script type="text/javascript" src="c.js"></script>
+</body>
+</html>
+
