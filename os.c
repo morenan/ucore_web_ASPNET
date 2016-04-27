@@ -1,4 +1,5 @@
 // os.c - based on xv6 with heavy modifications
+
 #include <u.h>
 
 enum {
@@ -234,6 +235,15 @@ ilock(struct inode *ip);
 iunlock(struct inode *ip);
 itrunc(struct inode *ip);
 int ssleep(int n);
+int socket(int family, int type, int protocol);
+int allocuvm(uint *pd, uint oldsz, uint newsz, int create);
+int deallocuvm(uint *pd, uint oldsz, uint newsz);
+mappage(uint *pd, uint va, uint pa, int perm);
+freevm(uint *pd);
+sched();
+init_fork();
+init_exec(char* cmd, char** argv);
+init_exit(int code);
 
 // page allocator
 char *kalloc()
@@ -1317,7 +1327,7 @@ bad:
 
 uint htonl(uint a) { return (a >> 24) | ((a >> 8) & 0xff00) | ((a << 8) & 0xff0000) | (a << 24); } // XXX eliminate
 ushort htons(ushort a) { return (a >> 8) | (a << 8); } // XXX eliminate
-int memcmp() { asm(LL,8); asm(LBL, 16); asm(LCL,24); asm(MCMP); } // XXX eliminate
+int memcmp(char* path, char* format, int n) { asm(LL,8); asm(LBL, 16); asm(LCL,24); asm(MCMP); } // XXX eliminate
 int open(char *path, int oflag) // XXX, int mode)
 {
   int fd, r; int h[4];
@@ -1434,11 +1444,15 @@ int pipe(int *fd)
 }
 uint *walkpdir(uint *pd, uint va);
 
+struct header {
+	uint magic, bss, entry, flags;
+};
+
 int exec(char *path, char **argv)
 {
   char *s, *last;
   uint argc, sz, sp, *stack, *pd, *oldpd, *pte;
-  struct { uint magic, bss, entry, flags; } hdr;
+  struct header hdr;
   struct inode *ip;
   char cpath[16];  // XXX length, safety!
   int i, n, c;
@@ -1764,14 +1778,14 @@ int bind(int fd, uint *addr, int addrlen)
   if (!(f = getf(fd)) || addrlen < 8 || !mvalid(addr, addrlen)) return -1;
   return sockbind(f->off, addr[0], addr[1]);
 }
-int socklisten() { asm(LL,8); asm(LBL,16); asm(NET8); }
+int socklisten(uint off, int len) { asm(LL,8); asm(LBL,16); asm(NET8); }
 int listen(int fd, int len)
 {
   struct file *f;
   if (!(f = getf(fd))) return -1;
   return socklisten(f->off, len);
 }
-int sockaccept() { asm(LL,8); asm(LBL,16); asm(LCL,24); asm(NET9); }
+int sockaccept(uint off, int a1, int a2) { asm(LL,8); asm(LBL,16); asm(LCL,24); asm(NET9); }
 int accept(int fd, uint *addr, int *addrlen) // XXXX params!!!! accept(int,*|0,*|0)
 {
   int sd;
@@ -1869,8 +1883,8 @@ init_start()
   init_exit(0); // become the idle task
 }
 init_fork() { asm(TRAP,S_fork); }
-init_exec() { asm(LL,8); asm(LBL,16); asm(TRAP,S_exec); }
-init_exit() { asm(LL,8); asm(TRAP,S_exit); }
+init_exec(char* cmd, char** argv) { asm(LL,8); asm(LBL,16); asm(TRAP,S_exec); }
+init_exit(int code) { asm(LL,8); asm(TRAP,S_exit); }
 
 userinit()
 {
@@ -2156,7 +2170,8 @@ alltraps()
   asm(PSHF);
   asm(PSHG);
   asm(LUSP); asm(PSHA);
-  trap();                // registers passed back out by magic reference :^O
+  #forcecall(trap)
+  //trap();                // registers passed back out by magic reference :^O
   asm(POPA); asm(SUSP);
   asm(POPG);
   asm(POPF);
@@ -2211,3 +2226,4 @@ main()
   asm(SSP);
   asm(LEV);
 }
+
