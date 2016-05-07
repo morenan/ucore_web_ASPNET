@@ -2201,7 +2201,7 @@
 									et.s_type = "bool";
 								break;
 							case "CONV" :
-								println("conv name="+et.value.name+" type1="+et.value.s_type+" type2="+et.s_type);
+								//println("conv name="+et.value.name+" type1="+et.value.s_type+" type2="+et.s_type);
 								if (!this.convType(et.value.s_type, et.s_type)) {
 									this.error(et.end, "cannot convert '"+et.value.s_type+"'to '"+et.s_type+"'");
 									et.s_type = "error";
@@ -2229,9 +2229,9 @@
 										this.error(et.end, "uncleared '"+et.name+"'");
 										et.s_type = "error"; break;
 									}
-									println("get var name="+et.name+" type="+et.s_type);
+									//println("get var name="+et.name+" type="+et.s_type);
 								}
-								println("var name="+et.value.name+" s_type="+et.value.s_type);	
+								//println("var name="+et.value.name+" s_type="+et.value.s_type);	
 								et.s_type = et.value.s_type; 
 								break;
 							case "FUNC" : 
@@ -2402,7 +2402,7 @@
 					if (et.text.length == 0) {
 						et.type = "empty"; break ;
 					}
-					println("expr =>");
+					//println("expr =>");
 					for (var i = 0 ; i < et.text.length ; i++) {
 						if (et.text[i].type == "MULT" && (i==0 || op_st[et.text[i-1].type] != null))
 							et.text[i].type = "PADDR"; 
@@ -2410,7 +2410,7 @@
 						  	et.text[i].type = "ADDR";
 						else if (et.text[i].type == "SUB"  && (i==0 || op_st[et.text[i-1].type] != null))
 						  	et.text[i].type = "REVERSE";
-						println("i="+i+" type="+et.text[i].type+" name="+et.text[i].name);
+						//println("i="+i+" type="+et.text[i].type+" name="+et.text[i].name);
 					}
 					for (var i = 0 ; i < et.text.length ; i++) {
 						if (et.text[i].type == "CONV" && (i==et.text.length-1 || op_st[et.text[i+1].type] != null)) {
@@ -2491,7 +2491,7 @@
 						this.error(et.end, "case label not within a switch statement"); 
 						break;
 					}
-					println("case value="+et.value.value);
+					//println("case value="+et.value.value);
 					if (swit.cases[et.value.value] != null) {
 						this.error(et.end, "duplicate case value");
 						this.error(swit.cases[et.value.value].end, "previously used here");
@@ -2588,6 +2588,7 @@
 					et.value = this.rec.getVariable(et.call);
 					et.reg = new Object();
 					et.reg.type = "empty";
+					et.reg_end = et.reg;
 					et.s_type = et.value.s_type;
 					break;
 				default :
@@ -2602,7 +2603,7 @@
 			}
 		}
 		g_ana.solve = function(et, prev) {
-			println("solve type="+et.type);
+			//println("solve type="+et.type);
 			if (et.type == "expr") {
 				this.solve(et.exprTree, prev);
 				et.value = et.exprTree.value;
@@ -2658,12 +2659,12 @@
 					 		case "VAR" :
 					 			if (et.value.value == null) {
 					 				if (et.value.type == "enum") {
-					 					println("get enum : " + et.value.parent+et.value.name);
+					 					//println("get enum : " + et.value.parent+et.value.name);
 					 					et.value = this.rec.getVariable(et.value.parent+et.value.name);
 					 				}
 					 			}
 					 			et.value = et.value.value;
-					 			println("get const = "+et.value);
+					 			//println("get const = "+et.value);
 					 			break;
 					 		default :
 					 			break;
@@ -2701,21 +2702,22 @@
 			return i;
 		}
 		i_gen.divtable = function(kvs, def, l, r, s_type) {
+			println("divtable l="+l+" r="+r);
 			var insts = null;
 			if (l == r) {
-				this.inst_g("LBI", kvs[l].key.value);
+				this.inst_g("LBI", kvs[l].key);
 				if (s_type == "float" || s_type == "double")
 					this.inst_g("BEF", kvs[l].value);
 				else
 					this.inst_g("BE", kvs[l].value);
 				this.inst_g("JMP", def);
 			} else if (r-l == 1) {
-				this.inst_g("LBI", kvs[l].key.value);
+				this.inst_g("LBI", kvs[l].key);
 				if (s_type == "float" || s_type == "double")
 					this.inst_g("BEF", kvs[l].value);
 				else
 					this.inst_g("BE", kvs[l].value);
-				this.inst_g("LBI", kvs[r].key.value);
+				this.inst_g("LBI", kvs[r].key);
 				if (s_type == "float" || s_type == "double")
 					this.inst_g("BEF", kvs[r].value);
 				else
@@ -2723,7 +2725,7 @@
 				this.inst_g("JMP", def);
 			} else {
 				var mid = (l+r)>>1, inst = new Object();
-				this.inst_g("LBI", kvs[mid].key.value);
+				this.inst_g("LBI", kvs[mid].key);
 				if (s_type == "float" || s_type == "double") {
 					this.inst_g("BEF", kvs[l].value);
 					inst.type = "BLTF";
@@ -2739,7 +2741,7 @@
 			return insts;
 		}
 		i_gen.generate = function(et, prev, sp_offset = 0, g_next=true) {
-			//println("generate type="+et.type+" prev="+prev+" sp_offset="+sp_offset);
+			//println("generate type="+et.type+" prev="+prev+" op_st="+et.op_st+" sp_offset="+sp_offset+" begin");
 			if (et.type != "var") 
 				et.addr = this.insts.length;
 			switch (et.type) {
@@ -2747,7 +2749,7 @@
 					insts = this.generate(et.text, prev, sp_offset);
 					break;
 				case "func" :
-					this.inst_g("ENT", -this.rec.getStackSize(prev+et.name+"::")); 
+					this.inst_g("ENT", -this.rec.getStackSize(prev+et.name+"::"), "func "+et.name+" entry"); 
 					this.generate(et.text, prev+et.name+"::");
 					this.inst_g("LEV", this.rec.getStackSize(prev+et.name+"::"));
 					break;
@@ -2797,10 +2799,12 @@
 				case "for" :
 					this.generate(et.s_expr, prev, sp_offset);
 					this.inst_g("JMP", et.c_expr, "for : b to condition checking");
+					//println("b1");
 					this.generate(et.stmt,   prev, sp_offset);
 					this.generate(et.e_expr, prev, sp_offset);
 					this.generate(et.c_expr, prev, sp_offset);
-					this.inst_g("BNZ", et.stmt, "for : if ("+et.cond.name+") continue loop");
+					//println("b2");
+					this.inst_g("BNZ", et.stmt, "for : if ("+et.c_expr.name+") continue loop");
 					break;
 				case "return" :
 					this.generate(et.value, prev, sp_offset);
@@ -2829,11 +2833,8 @@
 							kv = kvs[j]; kvs[j] = kvs[j-1]; kvs[j-1] = kv;
 						}
 					insts = this.generate(et.expr, prev, sp_offset);
-					if (kvs.length > 0) {
-						var reg_r = reg_l+1;
-						if (et.expr.s_type == "double" || et.expr.s_type == "long") reg_r++; 
+					if (kvs.length > 0) 
 						this.divtable(kvs, et.def, 0, kvs.length-1, et.expr.s_type);
-					}
 					this.generate(et.text, prev+et.bracket+"::", sp_offset);
 					break;
 				case "asm" :
@@ -2867,7 +2868,7 @@
 									inst.imme = (this.insts.length-inst.imme)<<2;
 									break;
 								}
-								var sp_delta = 0 ;
+								var sp_delta = 0;
 								if (et.type.slice(5) == "ASSIGN") {
 									this.generate(et.value2, prev, sp_offset);
 									this.save(et.value1, prev, sp_offset); 
@@ -2876,7 +2877,7 @@
 								sp_delta = this.pushSP(et.value1, prev);
 								sp_offset += sp_delta;
 								this.generate(et.value2, prev, sp_offset);
-								if (this.value2.s_type == "float" || this.value2.s_type == "double") {
+								if (et.value2.s_type == "float" || et.value2.s_type == "double") {
 									if (et.type.slice(5) == "MORE" || et.type.slice(5) == "NOTMORE") {
 										this.inst_g("POPG", 0, "pop "+et.value1.name+" to rg");
 										if (et.type.slice(5) == "MORE")
@@ -2926,43 +2927,43 @@
 									this.inst_g("POPA", 0);
 									switch (et.type.slice(5)) {
 										case "ADD" :
-											this.inst_g("ADD", 0, et.name); this.conv("int", et.value.s_type); break;
+											this.inst_g("ADD", 0, et.name); this.conv("int", et.s_type); break;
 										case "ASSIGNADD" :	
 											this.inst_g("ADD", 0, et.name); this.save(et.value1, prev, sp_offset); break;
 										case "SUB" :
-											this.inst_g("SUB", 0, et.name); this.conv("int", et.value.s_type); break;
+											this.inst_g("SUB", 0, et.name); this.conv("int", et.s_type); break;
 										case "ASSIGNSUB" :	
 											this.inst_g("SUB", 0, et.name); this.save(et.value1, prev, sp_offset); break;
 										case "MULT" :
-											this.inst_g("MUL", 0, et.name); this.conv("int", et.value.s_type); break;
+											this.inst_g("MUL", 0, et.name); this.conv("int", et.s_type); break;
 										case "ASSIGNMULT" :	
 											this.inst_g("MUL", 0, et.name); this.save(et.value1, prev, sp_offset); break;
 										case "DIV" :
-											this.inst_g("DIV", 0, et.name); this.conv("int", et.value.s_type); break;
-										case "ASSIGNDIV" :	
+											this.inst_g("DIV", 0, et.name); this.conv("int", et.s_type); break;
+										case "ASSIGNDIV" :
 											this.inst_g("DIV", 0, et.name); this.save(et.value1, prev, sp_offset); break;
 										case "AND" :
-											this.inst_g("AND", 0, et.name); this.conv("int", et.value.s_type); break;
-										case "ASSIGNAND" :	
+											this.inst_g("AND", 0, et.name); this.conv("int", et.s_type); break;
+										case "ASSIGNAND" :
 											this.inst_g("AND", 0, et.name); this.save(et.value1, prev, sp_offset); break;
 										case "OR" :
-											this.inst_g("OR", 0, et.name);  this.conv("int", et.value.s_type); break;
-										case "ASSIGNOR" :	
-											this.inst_g("OR", 0, et.name);  this.save(et.value1, prev, sp_offset); break;
+											this.inst_g("OR",  0, et.name); this.conv("int", et.s_type); break;
+										case "ASSIGNOR" :
+											this.inst_g("OR",  0, et.name); this.save(et.value1, prev, sp_offset); break;
 										case "XOR" :
-											this.inst_g("XOR", 0, et.name); this.conv("int", et.value.s_type); break;
+											this.inst_g("XOR", 0, et.name); this.conv("int", et.s_type); break;
 										case "ASSIGNXOR" :	
 											this.inst_g("XOR", 0, et.name); this.save(et.value1, prev, sp_offset); break;
 										case "SLL" :
-											this.inst_g("SHL", 0, et.name); this.conv("int", et.value.s_type); break;
+											this.inst_g("SHL", 0, et.name); this.conv("int", et.s_type); break;
 										case "ASSIGNSLL" :	
 											this.inst_g("SHL", 0, et.name); this.save(et.value1, prev, sp_offset); break;
 										case "SRL" :
-											this.inst_g("SRU", 0, et.name); this.conv("int", et.value.s_type); break;
+											this.inst_g("SRU", 0, et.name); this.conv("int", et.s_type); break;
 										case "ASSIGNXOR" :	
 											this.inst_g("SRU", 0, et.name); this.save(et.value1, prev, sp_offset); break;
 										case "SRA" :
-											this.inst_g("SHR", 0, et.name); this.conv("int", et.value.s_type); break;
+											this.inst_g("SHR", 0, et.name); this.conv("int", et.s_type); break;
 										case "ASSIGNSRA" :	
 											this.inst_g("SHR", 0, et.name); this.save(et.value1, prev, sp_offset); break;
 									}
@@ -2982,7 +2983,7 @@
 									case "PADDR" :
 										this.load_a(et); break;
 									case "ADDR" :
-										this.addr(et.value); break;
+										this.addr(et.value, prev, sp_offset); break;
 									case "OFFSET" :
 										this.inst_g("LBL", 0);
 										this.generate(et.offset, prev);
@@ -3002,7 +3003,7 @@
 											this.inst_g("ADDI", 1);
 										break;
 									case "REVERSE" :
-										this.inst_g("LBL", 0);
+										this.inst_g("LBA", 0);
 										this.inst_g("LI",  0);
 										this.inst_g("SUB", 0);
 										this.conv("int", et.type);
@@ -3030,8 +3031,8 @@
 									case "CONST" :
 										this.load_i(et.value, et.s_type);
 										break;
-									case "char" :
-										this.load_i(et.value.charCodeAt(0), et.s_type);
+									case "char" : 
+										this.load_i(et.value, et.s_type);
 										break;
 									case "string" :
 										this.load_i(et, et.s_type);
@@ -3055,26 +3056,26 @@
 		i_gen.pushSP = function(et, prev, sp_offset=0) {
 			this.generate(et, prev, sp_offset, false);
 			switch (et.s_type) {
-				case "float" : case "double" : this.inst_g("PSHF", 0); break;
-				default : this.inst_g("PSHA", 0); break;
+				case "float" : case "double" : this.inst_g("PSHF", 0); return 8;
+				default : this.inst_g("PSHA", 0); return 4;
 			}
 		}
 		i_gen.generate_n = function(number, struct, sp_offset, offset=0) {
 			switch (number.type) {
 				case "expr_VAR" :
 					if (!struct.value.instack)
-						this.load_g(number.addr+offset, et.s_type);
+						this.load_g(number.addr+offset, number.s_type);
 					else
-						this.load_s(struct.addr+number.addr+offset+sp_offset, et.s_type);
+						this.load_s(struct.addr+number.addr+offset+sp_offset, number.s_type);
 					break;
 				case "expr_NUMBER" :
 					this.generate_n(number.value2, struct, offset+number.value1.addr);
 					break;
 				case "expr_PNUMBER" :
 					if (!struct.value.instack)
-						this.load_g(number.value1.addr+offset, et.s_type);
+						this.load_g(number.value1.addr+offset, number.s_type);
 					else
-						this.load_s(struct.addr+number.value1.addr+offset, et.s_type);
+						this.load_s(struct.addr+number.value1.addr+offset, number.s_type);
 					this.generate_p(number.value2, offset);
 					break;
 				default :
@@ -3082,9 +3083,11 @@
 			}	
 		}
 		i_gen.generate_p = function(number, offset=0) {
+			println("generate_p type="+number.type);
 			switch (number.type) {
 				case "expr_VAR" :
 					this.load_a(number, number.addr);
+					break;
 				case "expr_NUMBER" :
 					this.generate_p(number.value2, offset+number.value1.addr);
 					break;
@@ -3096,6 +3099,35 @@
 					break;
 			}
 		}
+		
+		i_gen.addr = function(et, prev, sp_offset=0) {
+			println("addr type="+et.type);
+			switch (et.type) {
+				case "expr_VAR" :
+					if (!et.value.instack)
+						this.inst_g("LI", et.addr, "get " + et.name + "addr");
+					else
+						this.inst_g("LI", et.addr+sp_offset, "get " + et.name + "addr");
+					break;
+				case "expr_OFFSET" :
+					var delta = this.pushSP(et.offset, prev);
+					this.addr(et.value, prev, sp_offset+delta);
+					this.inst_g("ADDF", 0, "offset");
+					this.inst_g("ENT", delta);
+					break;
+				case "expr_NUMBER" :
+					this.addr(et.value1, prev, sp_offset);
+					this.inst_g("ADDI", et.value2.addr, "number addr");
+					break;
+				case "expr_PNUMBER" :
+					this.generate(et.value1, prev, sp_offset);
+					this.inst_g("ADDI", et.value2.addr, "number addr");
+					break;
+				default :
+					break;
+			}
+		}
+		
 		i_gen.load_g = function(addr, s_type) {
 			//println("load_g addr="+addr+" s_type="+s_type);
 			switch (s_type) {
@@ -3131,7 +3163,7 @@
 			}
 		}
 		i_gen.load_a = function(et, offset=0) {
-			//println("load_a et="+et+" s_type="+et.s_type);
+			println("load_a et="+et+" s_type="+et.s_type);
 			this.inst_g("LX", offset);
 			this.conv("int", et.s_type);	
 		}
@@ -3147,13 +3179,13 @@
 			}
 		}
 		i_gen.save = function(et, prev, sp_offset=0) {
-			//println("save type="+et.type+" prev="+prev+" sp_offset="+sp_offset);
+			println("save type="+et.type+" prev="+prev+" sp_offset="+sp_offset);
 			switch (et.type) {
 				case "expr_VAR" :
 					if (!et.value.instack)
-						this.save_g(et.value.addr, et.s_type);
+						this.save_g(et.addr, et.s_type);
 					else
-						this.save_s(et.value.addr+sp_offset, et.s_type);
+						this.save_s(et.addr+sp_offset, et.s_type);
 					break;
 				case "expr_PADDR" :
 					this.inst_g("LBA", 0);
@@ -3165,7 +3197,9 @@
 					break;
 				case "expr_PNUMBER" :
 					this.inst_g("LBA", 0);
-					this.generate(et.value, prev);
+					println("b3");
+					this.generate(et.value1, prev, sp_offset);
+					println("b4");
 					this.save_p(et.value2);
 					break;
 				default:
@@ -3202,12 +3236,13 @@
 			}
 		}
 		i_gen.save_n = function(number, struct, sp_offset, offset=0) {
+			//println("save_n number="+number.type+" struct="+struct.type+" sp_offset="+sp_offset);
 			switch (number.type) {
 				case "expr_VAR" :
 					if (!struct.value.instack)
-						this.save_g(number.addr+offset, et.s_type);
+						this.save_g(number.addr+offset, number.s_type);
 					else
-						this.save_s(struct.addr+number.addr+offset+sp_offset, et.s_type);
+						this.save_s(struct.addr+number.addr+offset+sp_offset, number.s_type);
 					break;
 				case "expr_NUMBER" :
 					this.save_n(number.value2, struct, offset+number.value1.addr);
@@ -3224,9 +3259,11 @@
 			}	
 		}
 		i_gen.save_p = function(number, offset=0) {
+			//println("save_p type="+number.type);
 			switch (number.type) {
 				case "expr_VAR" :
 					this.save_a(number, number.addr);
+					break;
 				case "expr_NUMBER" :
 					this.save_p(number.value2, offset+number.value1.addr);
 					break;
@@ -3239,18 +3276,21 @@
 			}
 		}
 		i_gen.save_a = function(et, offset=0) {
+			//println("save_a s_type="+et.s_type);
 			this.inst_g("PSHB", 0);
 			this.inst_g("LBA", 0);
 			this.inst_g("POPA", 0);
 			switch (et.s_type) {
-				case "int" :   this.inst_g("SX", et.number+offset); break;
-				case "short" : this.inst_g("SXH", et.number+offset); break;
+				case "int" :   this.inst_g("SX", offset); break;
+				case "short" : this.inst_g("SXH", offset); break;
 				case "bool" : 
-				case "char" :  this.inst_g("SXB", et.number+offset); break;
-				case "float" : this.inst_g("SXF", et.number+offset); break;
-				case "double": this.inst_g("SXD", et.number+offset); break;
+				case "char" :  this.inst_g("SXB", offset); break;
+				case "float" : this.inst_g("SXF", offset); break;
+				case "double": this.inst_g("SXD", offset); break;
+				default : break;
 			} 
 		}
+		
 		i_gen.conv = function(type1, type2) {
 			if (type1 == "float" || type1 == "double") {
 				switch (type2) {
